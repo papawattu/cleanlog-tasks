@@ -4,9 +4,10 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"os"
 )
 
-func startWebServer(ts TaskService) error {
+func startWebServer(port string, ts TaskService) error {
 
 	controllers, err := MakeControllers(context.Background(), NewTaskController(ts))
 	if err != nil {
@@ -22,15 +23,22 @@ func startWebServer(ts TaskService) error {
 	http.HandleFunc("/api/task/{taskid}", controllers.HandleRequest)
 	http.HandleFunc("/api/task", controllers.HandleRequest)
 
-	http.ListenAndServe(":3000", nil)
+	log.Printf("Starting Task server on port %s\n", port)
+
+	http.ListenAndServe(port, nil)
 
 	return nil
 }
 func main() {
 
+	port := ":3000"
+	if os.Getenv("PORT") != "" {
+		port = ":" + os.Getenv("PORT")
+	}
+
 	taskRepo := NewTaskRepository()
 	taskService := NewTaskService(taskRepo)
 
-	startWebServer(taskService)
+	startWebServer(port, taskService)
 
 }
