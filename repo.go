@@ -9,13 +9,13 @@ type TaskRepositoryImp struct {
 	Tasks map[int]*Task
 }
 
-func (wri *TaskRepositoryImp) SaveTask(t *Task) error {
-	wri.Tasks[*t.TaskID] = t
+func (tri *TaskRepositoryImp) SaveTask(t *Task) error {
+	tri.Tasks[*t.TaskID] = t
 	return nil
 }
 
-func (wri *TaskRepositoryImp) GetTask(id int) (*Task, error) {
-	t, ok := wri.Tasks[id]
+func (tri *TaskRepositoryImp) GetTask(id int) (*Task, error) {
+	t, ok := tri.Tasks[id]
 	if !ok {
 		return nil, nil
 	}
