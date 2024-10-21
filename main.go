@@ -25,9 +25,8 @@ func startWebServer(port string, ts TaskService) error {
 
 	log.Printf("Starting Task server on port %s\n", port)
 
-	http.ListenAndServe(port, nil)
+	return http.ListenAndServe(port, nil)
 
-	return nil
 }
 func main() {
 
@@ -39,6 +38,8 @@ func main() {
 	taskRepo := NewTaskRepository()
 	taskService := NewTaskService(taskRepo)
 
-	startWebServer(port, taskService)
+	if err := startWebServer(port, taskService); err != nil {
+		log.Fatal(err)
+	}
 
 }
