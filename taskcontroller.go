@@ -20,7 +20,11 @@ func NewTaskController(taskService TaskService) *TaskController {
 	return &TaskController{taskService: taskService, handlePost: func(w http.ResponseWriter, r *http.Request) {
 		var t types.CreateTaskRequest
 
-		json.NewDecoder(r.Body).Decode(&t)
+		err := json.NewDecoder(r.Body).Decode(&t)
+		if err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
 
 		workID, err := taskService.CreateTask(t.Description)
 		if err != nil {
@@ -28,7 +32,10 @@ func NewTaskController(taskService TaskService) *TaskController {
 		}
 
 		w.WriteHeader(http.StatusCreated)
-		json.NewEncoder(w).Encode(map[string]int{"taskId": workID})
+		err = json.NewEncoder(w).Encode(map[string]int{"taskId": workID})
+		if err != nil {
+			log.Fatalf("Error encoding response: %v", err)
+		}
 	}, handleGet: func(w http.ResponseWriter, r *http.Request) {
 		taskId := r.PathValue("taskid")
 		if taskId == "" {
@@ -53,9 +60,11 @@ func NewTaskController(taskService TaskService) *TaskController {
 		} else {
 
 			r := types.CreateTaskResponse{TaskId: *t.TaskID, Description: t.TaskDescription}
-			json.NewEncoder(w).Encode(r)
+			err := json.NewEncoder(w).Encode(r)
+			if err != nil {
+				log.Fatalf("Error encoding response: %v", err)
+			}
 		}
-
 	}}
 }
 

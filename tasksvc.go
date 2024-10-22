@@ -30,8 +30,6 @@ func (wsi *TaskServiceImp) CreateTask(description string) (int, error) {
 	nextId := nextId()
 	wl.TaskID = &nextId
 
-	wsi.repo.SaveTask(&wl)
-
 	err = wsi.repo.SaveTask(&wl)
 	if err != nil {
 		log.Fatalf("Error saving work log: %v", err)
