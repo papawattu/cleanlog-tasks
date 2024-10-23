@@ -7,6 +7,36 @@ import (
 	"os"
 )
 
+const (
+	defaultPort      = ":3000"
+	defaultAmqpURI   = "amqp://guest:guest@localhost:5672/"
+	defaultQueueName = "taskqueue"
+)
+
+type config struct {
+	port      string
+	amqpURI   string
+	queueName string
+}
+
+func getConfig() config {
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = defaultPort
+	}
+
+	amqpURI := os.Getenv("AMQP_URI")
+	if amqpURI == "" {
+		amqpURI = defaultAmqpURI
+	}
+
+	queueName := os.Getenv("QUEUE_NAME")
+	if queueName == "" {
+		queueName = defaultQueueName
+	}
+
+	return config{port, amqpURI, queueName}
+}
 func startWebServer(port string, ts TaskService) error {
 
 	controllers, err := MakeControllers(context.Background(), NewTaskController(ts))
@@ -30,15 +60,13 @@ func startWebServer(port string, ts TaskService) error {
 }
 func main() {
 
-	port := ":3000"
-	if os.Getenv("PORT") != "" {
-		port = ":" + os.Getenv("PORT")
-	}
+	cfg := getConfig()
 
-	taskRepo := NewTaskRepository()
-	taskService := NewTaskService(taskRepo)
+	taskRepo := NewSimpleTaskRepository()
+	eventRepo := NewEventInterceptor(context.Background(), cfg.queueName, cfg.amqpURI, taskRepo)
+	taskService := NewTaskService(eventRepo)
 
-	if err := startWebServer(port, taskService); err != nil {
+	if err := startWebServer(cfg.port, taskService); err != nil {
 		log.Fatal(err)
 	}
 
