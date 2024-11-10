@@ -63,10 +63,10 @@ func main() {
 	cfg := getConfig()
 
 	taskRepo := NewSimpleTaskRepository()
-	eventRepo := NewEventInterceptor(context.Background(), cfg.queueName, cfg.amqpURI, taskRepo)
-	taskService := NewTaskService(eventRepo)
+	//eventRepo := NewEventInterceptor(context.Background(), cfg.queueName, cfg.amqpURI, taskRepo)
+	taskService := NewTaskService(taskRepo)
 
-	if err := startWebServer(cfg.port, taskService); err != nil {
+	if err := startWebServer(":"+cfg.port, taskService); err != nil {
 		log.Fatal(err)
 	}
 

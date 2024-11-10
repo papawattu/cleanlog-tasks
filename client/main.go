@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 
 	"github.com/papawattu/cleanlog-tasks/types"
 )
@@ -65,7 +66,14 @@ func GetTask(id int, baseUri string) {
 }
 
 func main() {
-	id := CreateTask("Task 1", "http://localhost:3000")
 
-	GetTask(id, "http://localhost:3000")
+	baseUri := os.Getenv("BASE_URI")
+
+	if baseUri == "" {
+		baseUri = "http://localhost:3000"
+	}
+
+	id := CreateTask("Task 1", baseUri)
+
+	GetTask(id, baseUri)
 }

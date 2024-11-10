@@ -31,6 +31,7 @@ func NewTaskController(taskService TaskService) *TaskController {
 			log.Fatalf("Error starting task controller: %v", err)
 		}
 
+		w.Header().Set("Location", "/api/task/"+strconv.Itoa(workID))
 		w.WriteHeader(http.StatusCreated)
 		err = json.NewEncoder(w).Encode(map[string]int{"taskId": workID})
 		if err != nil {
