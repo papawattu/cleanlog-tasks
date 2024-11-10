@@ -1,6 +1,6 @@
 # Use a multi-stage build to support multiple architectures
 # Stage 1: Build stage
-FROM golang:1.23.1 AS builder
+FROM golang:1.23.1-alpine AS builder
 LABEL org.opencontainers.image.source=https://github.com/papawattu/cleanlog-tasks
 LABEL org.opencontainers.image.description="A simple web app log cleaning house"
 LABEL org.opencontainers.image.licenses=MIT
@@ -9,15 +9,13 @@ ARG USER=nouser
 
 WORKDIR /app
 
-
 COPY go.mod go.sum ./
 
 RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o bin/tasks ./
-
+RUN make build
 
 # Stage 2: Final stage
 FROM alpine AS build-stage
