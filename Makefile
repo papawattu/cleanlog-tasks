@@ -3,7 +3,7 @@
 all: build client
 
 build:
-	@go build -o bin/tasks ./...
+	@go build -o bin/tasks ./*.go
 
 client:
 	@go build -o bin/client client/main.go
