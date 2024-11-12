@@ -10,9 +10,10 @@ import (
 )
 
 type TaskController struct {
-	taskService TaskService
-	handlePost  func(w http.ResponseWriter, r *http.Request)
-	handleGet   func(w http.ResponseWriter, r *http.Request)
+	taskService  TaskService
+	handlePost   func(w http.ResponseWriter, r *http.Request)
+	handleGet    func(w http.ResponseWriter, r *http.Request)
+	handleDelete func(w http.ResponseWriter, r *http.Request)
 }
 
 func NewTaskController(taskService TaskService) *TaskController {
@@ -66,7 +67,28 @@ func NewTaskController(taskService TaskService) *TaskController {
 				log.Fatalf("Error encoding response: %v", err)
 			}
 		}
-	}}
+	}, handleDelete: func(w http.ResponseWriter, r *http.Request) {
+		taskId := r.PathValue("taskid")
+		if taskId == "" {
+			http.Error(w, "taskId is required", http.StatusBadRequest)
+			return
+		}
+
+		id, err := strconv.Atoi(taskId)
+		if err != nil {
+			http.Error(w, "taskId must be an integer %s", http.StatusBadRequest)
+			return
+		}
+
+		err = taskService.DeleteTask(r.Context(), id)
+		if err != nil {
+			log.Fatalf("Error deleting task: %v", err)
+			http.Error(w, "Error deleting task", http.StatusInternalServerError)
+		}
+
+		w.WriteHeader(http.StatusNoContent)
+	},
+	}
 }
 
 func (wc *TaskController) Start() error {

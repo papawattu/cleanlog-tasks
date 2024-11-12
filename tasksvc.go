@@ -13,6 +13,8 @@ type TaskService interface {
 	CreateTask(ctx context.Context, description string) (int, error)
 
 	GetTask(ctx context.Context, id int) (*models.Task, error)
+
+	DeleteTask(ctx context.Context, id int) error
 }
 
 type TaskServiceImp struct {
@@ -52,6 +54,27 @@ func (wsi *TaskServiceImp) GetTask(ctx context.Context, id int) (*models.Task, e
 	}
 
 	return wl, nil
+}
+
+func (wsi *TaskServiceImp) DeleteTask(ctx context.Context, id int) error {
+
+	t, err := wsi.GetTask(ctx, id)
+
+	if err != nil {
+		log.Fatalf("Error getting work log: %v", err)
+		return err
+	}
+	if t == nil {
+		log.Fatalf("Error getting work log: %v", err)
+		return nil
+	}
+	err = wsi.repo.Delete(ctx, t)
+	if err != nil {
+		log.Fatalf("Error deleting work log: %v", err)
+		return err
+	}
+
+	return nil
 }
 func NewTaskService(repo repo.Repository[*models.Task, int]) TaskService {
 
