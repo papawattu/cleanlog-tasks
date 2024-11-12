@@ -1,27 +1,31 @@
 package main
 
 import (
+	"context"
 	"log"
 	"math/rand"
+
+	"github.com/papawattu/cleanlog-tasks/internal/models"
+	"github.com/papawattu/cleanlog-tasks/internal/repo"
 )
 
 type TaskService interface {
-	CreateTask(description string) (int, error)
+	CreateTask(ctx context.Context, description string) (int, error)
 
-	GetTask(id int) (*Task, error)
+	GetTask(ctx context.Context, id int) (*models.Task, error)
 }
 
 type TaskServiceImp struct {
-	repo TaskRepository
+	repo repo.Repository[*models.Task, int]
 }
 
 func nextId() int {
 	return rand.Intn(1000)
 }
 
-func (wsi *TaskServiceImp) CreateTask(description string) (int, error) {
+func (wsi *TaskServiceImp) CreateTask(ctx context.Context, description string) (int, error) {
 
-	wl, err := NewTask(description)
+	wl, err := models.NewTask(description)
 	if err != nil {
 		log.Fatalf("Error starting work: %v", err)
 		return 0, err
@@ -30,7 +34,7 @@ func (wsi *TaskServiceImp) CreateTask(description string) (int, error) {
 	nextId := nextId()
 	wl.TaskID = &nextId
 
-	err = wsi.repo.SaveTask(&wl)
+	err = wsi.repo.Save(ctx, &wl)
 	if err != nil {
 		log.Fatalf("Error saving work log: %v", err)
 		return 0, err
@@ -38,9 +42,9 @@ func (wsi *TaskServiceImp) CreateTask(description string) (int, error) {
 	return nextId, nil
 }
 
-func (wsi *TaskServiceImp) GetTask(id int) (*Task, error) {
+func (wsi *TaskServiceImp) GetTask(ctx context.Context, id int) (*models.Task, error) {
 
-	wl, err := wsi.repo.GetTask(id)
+	wl, err := wsi.repo.Get(ctx, id)
 
 	if err != nil {
 		log.Fatalf("Error getting work log: %v", err)
@@ -49,7 +53,7 @@ func (wsi *TaskServiceImp) GetTask(id int) (*Task, error) {
 
 	return wl, nil
 }
-func NewTaskService(repo TaskRepository) TaskService {
+func NewTaskService(repo repo.Repository[*models.Task, int]) TaskService {
 
 	return &TaskServiceImp{
 		repo: repo,

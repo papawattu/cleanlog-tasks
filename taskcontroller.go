@@ -26,7 +26,7 @@ func NewTaskController(taskService TaskService) *TaskController {
 			return
 		}
 
-		workID, err := taskService.CreateTask(t.Description)
+		workID, err := taskService.CreateTask(r.Context(), t.Description)
 		if err != nil {
 			log.Fatalf("Error starting task controller: %v", err)
 		}
@@ -50,7 +50,7 @@ func NewTaskController(taskService TaskService) *TaskController {
 			return
 		}
 
-		t, err := taskService.GetTask(id)
+		t, err := taskService.GetTask(r.Context(), id)
 		if err != nil {
 			log.Fatalf("Error getting work log: %v", err)
 			http.Error(w, "Error getting work log", http.StatusInternalServerError)

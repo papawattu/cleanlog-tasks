@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -19,6 +20,7 @@ func CreateTask(description string, baseUri string) int {
 		return -1
 	}
 
+	slog.Info("Creating task with description", "description", description, "url", url)
 	resp, err := http.Post(url, "application/json", bytes.NewBuffer(b))
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -70,7 +72,7 @@ func main() {
 	baseUri := os.Getenv("BASE_URI")
 
 	if baseUri == "" {
-		baseUri = "http://localhost:3000"
+		baseUri = "http://localhost:3002"
 	}
 
 	id := CreateTask("Task 1", baseUri)

@@ -2,13 +2,15 @@ package main
 
 import (
 	"testing"
+
+	"github.com/papawattu/cleanlog-tasks/internal/models"
 )
 
 // TestNewTask tests the NewTask function
 
 func TestNewTask(t *testing.T) {
 	// Create a new task
-	task, err := NewTask("Test Task")
+	task, err := models.NewTask("Test Task")
 	if err != nil {
 		t.Fatalf("Error creating new task: %v", err)
 	}

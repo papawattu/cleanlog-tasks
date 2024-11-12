@@ -5,10 +5,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/papawattu/cleanlog-tasks/internal/events"
+	"github.com/papawattu/cleanlog-tasks/internal/repo"
 )
 
 const (
-	defaultPort      = ":3000"
+	defaultPort      = "3002"
 	defaultAmqpURI   = "amqp://guest:guest@localhost:5672/"
 	defaultQueueName = "taskqueue"
 )
@@ -61,10 +64,18 @@ func startWebServer(port string, ts TaskService) error {
 func main() {
 
 	cfg := getConfig()
+	ctx := context.Background()
 
-	taskRepo := NewSimpleTaskRepository()
-	//eventRepo := NewEventInterceptor(context.Background(), cfg.queueName, cfg.amqpURI, taskRepo)
-	taskService := NewTaskService(taskRepo)
+	taskRepo := repo.NewSimpleTaskRepository()
+
+	var taskService TaskService
+
+	if os.Getenv("EVENT_STORE") == "" || os.Getenv("EVENT_STREAM") == "" {
+		taskService = NewTaskService(taskRepo)
+	} else {
+		eventBroadcaster := events.NewEventBroadcaster(ctx, taskRepo, os.Getenv("EVENT_STORE"), os.Getenv("EVENT_STREAM"), "task", "Task")
+		taskService = NewTaskService(eventBroadcaster)
+	}
 
 	if err := startWebServer(":"+cfg.port, taskService); err != nil {
 		log.Fatal(err)
