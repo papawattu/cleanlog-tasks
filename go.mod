@@ -2,4 +2,4 @@ module github.com/papawattu/cleanlog-tasks
 
 go 1.23.1
 
-require github.com/rabbitmq/amqp091-go v1.10.0 // indirect
+require github.com/papawattu/cleanlog-eventstore v0.0.0
