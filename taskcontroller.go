@@ -109,6 +109,8 @@ func (wc *TaskController) HandleRequest(w http.ResponseWriter, r *http.Request) 
 		wc.handlePost(w, r)
 	case r.Method == "GET":
 		wc.handleGet(w, r)
+	case r.Method == "DELETE":
+		wc.handleDelete(w, r)
 	default:
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 

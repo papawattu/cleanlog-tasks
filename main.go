@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/papawattu/cleanlog-tasks/internal/events"
+	events "github.com/papawattu/cleanlog-eventstore/events"
 	"github.com/papawattu/cleanlog-tasks/internal/repo"
 )
 

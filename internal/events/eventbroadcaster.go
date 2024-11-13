@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"time"
 
+	repo "github.com/papawattu/cleanlog-eventstore/repository"
 	utils "github.com/papawattu/cleanlog-tasks/internal"
-	"github.com/papawattu/cleanlog-tasks/internal/repo"
 )
 
 const (
@@ -42,6 +42,14 @@ func (eb *EventBroadcaster[T, S]) postEvent(event Event) error {
 	if err != nil {
 		return err
 	}
+
+	h := sha256.New()
+
+	h.Write([]byte(ev))
+
+	event.EventSHA = fmt.Sprintf("%x", h.Sum(nil))
+
+	ev, err = json.Marshal(event)
 
 	client := utils.NewRetryableClient(10)
 
@@ -75,16 +83,11 @@ func (eb *EventBroadcaster[T, S]) Save(ctx context.Context, e T) error {
 		return err
 	}
 
-	h := sha256.New()
-
-	h.Write([]byte(ent))
-
 	// Broadcast event
 	event := Event{
 		EventType:    eb.eventTypePrefix + Created,
 		EventTime:    time.Now(),
 		EventVersion: EventVersion,
-		EventSHA:     fmt.Sprintf("%x", h.Sum(nil)),
 		EventData:    string(ent),
 	}
 
@@ -126,16 +129,11 @@ func (eb *EventBroadcaster[T, S]) Delete(ctx context.Context, e T) error {
 		return err
 	}
 
-	h := sha256.New()
-
-	h.Write([]byte(wlj))
-
 	// Broadcast event
 	event := Event{
 		EventType:    eb.eventTypePrefix + Deleted,
 		EventTime:    time.Now(),
 		EventVersion: EventVersion,
-		EventSHA:     fmt.Sprintf("%x", h.Sum(nil)),
 		EventData:    string(wlj),
 	}
 

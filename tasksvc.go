@@ -5,8 +5,8 @@ import (
 	"log"
 	"math/rand"
 
+	repo "github.com/papawattu/cleanlog-eventstore/repository"
 	"github.com/papawattu/cleanlog-tasks/internal/models"
-	"github.com/papawattu/cleanlog-tasks/internal/repo"
 )
 
 type TaskService interface {
