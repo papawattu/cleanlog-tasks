@@ -6,14 +6,9 @@ import (
 	"net/http"
 	"os"
 
-	events "github.com/papawattu/cleanlog-eventstore/events"
-	"github.com/papawattu/cleanlog-tasks/internal/repo"
-)
-
-const (
-	defaultPort      = "3002"
-	defaultAmqpURI   = "amqp://guest:guest@localhost:5672/"
-	defaultQueueName = "taskqueue"
+	common "github.com/papawattu/cleanlog-common"
+	events "github.com/papawattu/cleanlog-common"
+	"github.com/papawattu/cleanlog-tasks/internal/models"
 )
 
 type config struct {
@@ -22,24 +17,6 @@ type config struct {
 	queueName string
 }
 
-func getConfig() config {
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = defaultPort
-	}
-
-	amqpURI := os.Getenv("AMQP_URI")
-	if amqpURI == "" {
-		amqpURI = defaultAmqpURI
-	}
-
-	queueName := os.Getenv("QUEUE_NAME")
-	if queueName == "" {
-		queueName = defaultQueueName
-	}
-
-	return config{port, amqpURI, queueName}
-}
 func startWebServer(port string, ts TaskService) error {
 
 	controllers, err := MakeControllers(context.Background(), NewTaskController(ts))
@@ -63,21 +40,22 @@ func startWebServer(port string, ts TaskService) error {
 }
 func main() {
 
-	cfg := getConfig()
-	ctx := context.Background()
-
-	taskRepo := repo.NewSimpleTaskRepository()
-
 	var taskService TaskService
 
 	if os.Getenv("EVENT_STORE") == "" || os.Getenv("EVENT_STREAM") == "" {
+		taskRepo := common.NewInMemoryRepository[*models.Task]()
 		taskService = NewTaskService(taskRepo)
 	} else {
-		eventBroadcaster := events.NewEventBroadcaster(ctx, taskRepo, os.Getenv("EVENT_STORE"), os.Getenv("EVENT_STREAM"), "task", "Task")
+		ht := events.NewHttpTransport(os.Getenv("EVENT_STORE"), os.Getenv("EVENT_STREAM"), 10)
+		taskRepo := common.NewMemcacheRepository[*models.Task]("localhost:11211", "task", nil)
+		eventBroadcaster := common.NewEventService(taskRepo, ht, "Task")
+
 		taskService = NewTaskService(eventBroadcaster)
+
+		eventBroadcaster.StartEventRunner(context.Background())
 	}
 
-	if err := startWebServer(":"+cfg.port, taskService); err != nil {
+	if err := startWebServer(":3000", taskService); err != nil {
 		log.Fatal(err)
 	}
 

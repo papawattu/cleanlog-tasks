@@ -4,8 +4,9 @@ import (
 	"context"
 	"log"
 	"math/rand"
+	"strconv"
 
-	repo "github.com/papawattu/cleanlog-eventstore/repository"
+	repo "github.com/papawattu/cleanlog-common"
 	"github.com/papawattu/cleanlog-tasks/internal/models"
 )
 
@@ -18,7 +19,7 @@ type TaskService interface {
 }
 
 type TaskServiceImp struct {
-	repo repo.Repository[*models.Task, int]
+	repo repo.Repository[*models.Task, string]
 }
 
 func nextId() int {
@@ -41,12 +42,22 @@ func (wsi *TaskServiceImp) CreateTask(ctx context.Context, description string) (
 		log.Fatalf("Error saving work log: %v", err)
 		return 0, err
 	}
+
+	found := false
+
+	for !found {
+		t, _ := wsi.repo.Get(ctx, strconv.Itoa(nextId))
+		if t != nil {
+			found = true
+		}
+	}
+
 	return nextId, nil
 }
 
 func (wsi *TaskServiceImp) GetTask(ctx context.Context, id int) (*models.Task, error) {
 
-	wl, err := wsi.repo.Get(ctx, id)
+	wl, err := wsi.repo.Get(ctx, strconv.Itoa(id))
 
 	if err != nil {
 		log.Fatalf("Error getting work log: %v", err)
@@ -76,7 +87,7 @@ func (wsi *TaskServiceImp) DeleteTask(ctx context.Context, id int) error {
 
 	return nil
 }
-func NewTaskService(repo repo.Repository[*models.Task, int]) TaskService {
+func NewTaskService(repo repo.Repository[*models.Task, string]) TaskService {
 
 	return &TaskServiceImp{
 		repo: repo,

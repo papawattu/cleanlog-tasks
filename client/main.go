@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/papawattu/cleanlog-tasks/types"
 )
@@ -45,16 +47,39 @@ func CreateTask(description string, baseUri string) int {
 }
 func GetTask(id int, baseUri string) {
 	url := fmt.Sprintf("%s/api/task/%d", baseUri, id)
-	resp, err := http.Get(url)
-	if err != nil {
-		fmt.Println("Error:", err)
-		return
-	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		fmt.Println("Error: status code", resp.StatusCode)
-		return
+	var resp *http.Response
+	var err error
+	var count int = 0
+
+	for {
+		resp, err = http.Get(url)
+		if err != nil {
+			log.Println("Error:", err)
+			return
+		}
+
+		if resp.StatusCode == http.StatusNotFound {
+			if count > 20 {
+				log.Fatalln("Task not found")
+				return
+			}
+			count++
+			log.Printf("Task not found at %s waiting - times %d\n", url, count)
+			time.Sleep(1 * time.Second)
+		} else {
+			if resp.StatusCode == http.StatusOK {
+				log.Printf("Task found at %s\n", url)
+				break
+			} else {
+				log.Fatalf("Error: status code %d\n", resp.StatusCode)
+				return
+			}
+		}
+	}
+	if resp != nil {
+
+		defer resp.Body.Close()
 	}
 
 	r := &types.CreateTaskResponse{}
