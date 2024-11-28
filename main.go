@@ -4,17 +4,17 @@ import (
 	"context"
 	"log"
 	"net/http"
-	"os"
 
+	"github.com/kelseyhightower/envconfig"
 	common "github.com/papawattu/cleanlog-common"
 	events "github.com/papawattu/cleanlog-common"
 	"github.com/papawattu/cleanlog-tasks/internal/models"
 )
 
-type config struct {
-	port      string
-	amqpURI   string
-	queueName string
+type Config struct {
+	Port        string `envconfig:"PORT" default:"3000"`
+	EventStore  string `envconfig:"EVENT_STORE"`
+	EventStream string `envconfig:"EVENT_STREAM"`
 }
 
 func startWebServer(port string, ts TaskService) error {
@@ -40,13 +40,20 @@ func startWebServer(port string, ts TaskService) error {
 }
 func main() {
 
+	var cfg Config
+
+	err := envconfig.Process("task", &cfg)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
 	var taskService TaskService
 
-	if os.Getenv("EVENT_STORE") == "" || os.Getenv("EVENT_STREAM") == "" {
+	if cfg.EventStore == "" || cfg.EventStream == "" {
 		taskRepo := common.NewInMemoryRepository[*models.Task]()
 		taskService = NewTaskService(taskRepo)
 	} else {
-		ht := events.NewHttpTransport(os.Getenv("EVENT_STORE"), os.Getenv("EVENT_STREAM"), 10)
+		ht := events.NewHttpTransport(cfg.EventStore, cfg.EventStream, 10)
 		taskRepo := common.NewMemcacheRepository[*models.Task]("localhost:11211", "task", nil)
 		eventBroadcaster := common.NewEventService(taskRepo, ht, "Task")
 
@@ -55,7 +62,7 @@ func main() {
 		eventBroadcaster.StartEventRunner(context.Background())
 	}
 
-	if err := startWebServer(":3000", taskService); err != nil {
+	if err := startWebServer(":"+cfg.Port, taskService); err != nil {
 		log.Fatal(err)
 	}
 
